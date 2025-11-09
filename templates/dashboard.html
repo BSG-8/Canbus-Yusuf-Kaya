@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ EV Charging Station - Real-time Monitor</title>
+    <title>⚡ EV Charging Station Monitor</title>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -16,739 +15,336 @@
         }
         
         :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            --bg-gradient: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --card-border: rgba(255, 255, 255, 0.1);
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255, 255, 255, 0.7);
+            --bg-dark: #0a0a0a;
+            --bg-card: #1a1a1a;
+            --bg-hover: #242424;
+            --primary: #dc2626;
+            --primary-dark: #991b1b;
             --success: #10b981;
             --danger: #ef4444;
-            --warning: #f59e0b;
-            --info: #3b82f6;
+            --text-primary: #ffffff;
+            --text-secondary: #9ca3af;
+            --border: #2a2a2a;
         }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg-gradient);
-            background-attachment: fixed;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
             color: var(--text-primary);
-            overflow-x: hidden;
-            min-height: 100vh;
-            position: relative;
+            line-height: 1.6;
         }
         
-        /* GPU Acceleration */
-        .gpu-accelerated {
-            will-change: transform;
-            transform: translateZ(0);
-            backface-visibility: hidden;
-            perspective: 1000px;
-        }
-        
-        /* Animated Background with Mesh Gradient */
-        .bg-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-            background: var(--bg-gradient);
-        }
-        
-        .gradient-orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.3;
-            animation: float-orb 20s infinite ease-in-out;
-            will-change: transform;
-        }
-        
-        .orb-1 {
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, #667eea, transparent);
-            top: -100px;
-            left: -100px;
-            animation-delay: 0s;
-        }
-        
-        .orb-2 {
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, #764ba2, transparent);
-            top: 50%;
-            right: -100px;
-            animation-delay: -7s;
-        }
-        
-        .orb-3 {
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, #f093fb, transparent);
-            bottom: -200px;
-            left: 30%;
-            animation-delay: -14s;
-        }
-        
-        @keyframes float-orb {
-            0%, 100% {
-                transform: translate(0, 0) scale(1);
-            }
-            33% {
-                transform: translate(50px, -50px) scale(1.1);
-            }
-            66% {
-                transform: translate(-30px, 30px) scale(0.9);
-            }
-        }
-        
-        .particle {
-            position: absolute;
-            width: 3px;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-            animation: float 12s infinite ease-in-out;
-            will-change: transform, opacity;
-        }
-        
-        @keyframes float {
-            0% {
-                transform: translateY(100vh) translateX(0) scale(0);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100px) translateX(100px) scale(1);
-                opacity: 0;
-            }
-        }
-        
-        /* Container */
         .container {
             max-width: 1600px;
             margin: 0 auto;
-            padding: 30px 20px;
-            position: relative;
-            z-index: 1;
+            padding: 20px;
         }
         
-        /* Header with Neon Effect */
+        /* Header */
         .header {
             text-align: center;
-            margin-bottom: 50px;
-            animation: slideDown 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            position: relative;
-        }
-        
-        @keyframes slideDown {
-            0% {
-                opacity: 0;
-                transform: translateY(-80px) scale(0.9);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+            margin-bottom: 40px;
+            padding: 30px 0;
+            border-bottom: 2px solid var(--border);
         }
         
         .header h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(2.5rem, 6vw, 5rem);
-            font-weight: 900;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 15px;
-            letter-spacing: -3px;
-            position: relative;
-            display: inline-block;
-            filter: drop-shadow(0 0 30px rgba(102, 126, 234, 0.8));
-            animation: glow-pulse 3s infinite;
-        }
-        
-        @keyframes glow-pulse {
-            0%, 100% {
-                filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.6));
-            }
-            50% {
-                filter: drop-shadow(0 0 40px rgba(102, 126, 234, 1));
-            }
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
         }
         
         .header-subtitle {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1rem;
-            color: rgba(255, 255, 255, 0.7);
-            font-weight: 400;
-            letter-spacing: 5px;
-            text-transform: uppercase;
-            margin-bottom: 20px;
-        }
-        
-        /* Status Badge with Advanced Animation */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 35px;
-            border-radius: 50px;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            font-size: 1.1rem;
-            margin-top: 25px;
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-        }
-        
-        .status-badge::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.5s;
-        }
-        
-        .status-badge:hover::before {
-            left: 100%;
-        }
-        
-        .status-running {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.4), rgba(5, 150, 105, 0.6));
-            border-color: var(--success);
-            animation: pulse-glow 2s infinite;
-        }
-        
-        .status-stopped {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.6));
-            border-color: var(--danger);
-        }
-        
-        @keyframes pulse-glow {
-            0%, 100% {
-                box-shadow: 0 0 20px rgba(16, 185, 129, 0.5), 0 0 40px rgba(16, 185, 129, 0.3), inset 0 0 20px rgba(16, 185, 129, 0.2);
-            }
-            50% {
-                box-shadow: 0 0 35px rgba(16, 185, 129, 0.8), 0 0 60px rgba(16, 185, 129, 0.5), inset 0 0 30px rgba(16, 185, 129, 0.4);
-            }
-        }
-        
-        .status-dot {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: currentColor;
-            box-shadow: 0 0 15px currentColor;
-            animation: pulse-dot 1.2s infinite;
-        }
-        
-        @keyframes pulse-dot {
-            0%, 100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(1.3);
-                opacity: 0.7;
-            }
-        }
-        
-        /* Stats Grid with Stagger Animation */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin-bottom: 50px;
-        }
-        
-        .stat-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px) saturate(180%);
-            border-radius: 30px;
-            padding: 35px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--card-border);
-            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            position: relative;
-            overflow: hidden;
-            animation: fadeInUp 0.8s ease-out both;
-            will-change: transform;
-        }
-        
-        .stat-card:nth-child(1) { animation-delay: 0.1s; }
-        .stat-card:nth-child(2) { animation-delay: 0.2s; }
-        .stat-card:nth-child(3) { animation-delay: 0.3s; }
-        .stat-card:nth-child(4) { animation-delay: 0.4s; }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(40px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--primary-gradient);
-            opacity: 0;
-            transition: opacity 0.5s;
-            z-index: -1;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-15px) scale(1.03) rotateX(5deg);
-            box-shadow: 0 30px 80px rgba(102, 126, 234, 0.4);
-            border-color: rgba(102, 126, 234, 0.6);
-        }
-        
-        .stat-card:hover::before {
-            opacity: 0.15;
-        }
-        
-        .stat-icon {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            filter: drop-shadow(0 0 25px rgba(102, 126, 234, 0.6));
-            animation: icon-float 3s infinite ease-in-out;
-        }
-        
-        @keyframes icon-float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        .stat-label {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             color: var(--text-secondary);
-            margin-bottom: 12px;
-            font-weight: 600;
             letter-spacing: 2px;
             text-transform: uppercase;
         }
         
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            border: 2px solid;
+        }
+        
+        .status-running {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            color: var(--success);
+        }
+        
+        .status-stopped {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.2s ease;
+        }
+        
+        .stat-card:hover {
+            background: var(--bg-hover);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
         .stat-value {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 3.2rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, #ffffff, #e0e7ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 1.2;
-            margin-bottom: 8px;
-            text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
         }
         
         .stat-trend {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--success);
-            font-weight: 700;
-            margin-top: 12px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            margin-top: 10px;
         }
         
-        .stat-trend i {
-            animation: bounce 1.5s infinite;
-        }
-        
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-        
-        /* Section Titles */
+        /* Section Title */
         .section-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2.2rem;
-            font-weight: 700;
-            margin-bottom: 30px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary);
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             color: var(--text-primary);
-            animation: fadeIn 1s ease-out;
-            position: relative;
-            padding-bottom: 15px;
-        }
-        
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100px;
-            height: 3px;
-            background: var(--primary-gradient);
-            border-radius: 3px;
-            box-shadow: 0 0 15px rgba(102, 126, 234, 0.6);
         }
         
         .section-title i {
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.6));
+            color: var(--primary);
         }
         
         /* Anomaly Section */
         .anomaly-container {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px) saturate(180%);
-            border-radius: 35px;
-            padding: 40px;
-            margin-bottom: 50px;
-            border: 1px solid var(--card-border);
-            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
-            animation: fadeIn 1s ease-out 0.5s both;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
         }
         
         .anomaly-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
         }
         
         .anomaly-card {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
-            border: 2px solid rgba(239, 68, 68, 0.4);
-            padding: 30px;
-            border-radius: 25px;
-            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-            cursor: pointer;
-        }
-        
-        .anomaly-card::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.15), transparent);
-            transform: rotate(45deg);
-            transition: all 0.6s;
-        }
-        
-        .anomaly-card:hover::after {
-            left: 100%;
-            top: 100%;
+            background: var(--bg-dark);
+            border: 2px solid;
+            padding: 20px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
         }
         
         .anomaly-card.normal {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
-            border-color: rgba(16, 185, 129, 0.4);
+            border-color: var(--success);
+        }
+        
+        .anomaly-card:not(.normal) {
+            border-color: var(--danger);
         }
         
         .anomaly-card:hover {
-            transform: translateY(-10px) scale(1.05);
-            box-shadow: 0 20px 50px rgba(239, 68, 68, 0.4);
-            border-color: rgba(239, 68, 68, 0.8);
-        }
-        
-        .anomaly-card.normal:hover {
-            box-shadow: 0 20px 50px rgba(16, 185, 129, 0.4);
-            border-color: rgba(16, 185, 129, 0.8);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(220, 38, 38, 0.3);
         }
         
         .anomaly-name {
-            font-size: 1rem;
-            margin-bottom: 15px;
-            font-weight: 700;
+            font-size: 0.85rem;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: rgba(255, 255, 255, 0.95);
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
         }
         
         .anomaly-count {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 3rem;
-            font-weight: 900;
+            font-size: 2rem;
+            font-weight: 700;
             color: var(--text-primary);
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
         }
         
-        .anomaly-icon {
-            position: absolute;
-            top: 25px;
-            right: 25px;
-            font-size: 2.5rem;
-            opacity: 0.15;
-            animation: rotate-slow 10s infinite linear;
-        }
-        
-        @keyframes rotate-slow {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Charge Points Grid */
+        /* Charge Points */
         .charge-points-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 30px;
-            margin-bottom: 50px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
         }
         
         .cp-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px) saturate(180%);
-            border-radius: 30px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            border: 2px solid transparent;
-            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .cp-card::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 6px;
-            height: 100%;
-            background: var(--primary-gradient);
-            transition: width 0.5s;
-        }
-        
-        .cp-card:hover::before {
-            width: 100%;
-            opacity: 0.1;
-        }
-        
-        .cp-card.charging {
-            border-color: rgba(16, 185, 129, 0.6);
-            animation: charging-pulse 2.5s infinite;
-        }
-        
-        @keyframes charging-pulse {
-            0%, 100% {
-                box-shadow: 0 0 25px rgba(16, 185, 129, 0.4), inset 0 0 20px rgba(16, 185, 129, 0.1);
-            }
-            50% {
-                box-shadow: 0 0 50px rgba(16, 185, 129, 0.7), inset 0 0 40px rgba(16, 185, 129, 0.2);
-            }
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s ease;
         }
         
         .cp-card:hover {
-            transform: translateY(-12px) scale(1.03);
-            box-shadow: 0 25px 70px rgba(102, 126, 234, 0.5);
-            border-color: rgba(102, 126, 234, 0.6);
+            background: var(--bg-hover);
+            border-left-color: var(--success);
+            transform: translateY(-3px);
+        }
+        
+        .cp-card.charging {
+            border-left-color: var(--success);
         }
         
         .cp-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
-            position: relative;
-            z-index: 1;
+            margin-bottom: 20px;
         }
         
         .cp-id {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.6rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, #ffffff, #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
         }
         
         .cp-status {
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            backdrop-filter: blur(10px);
-            border: 2px solid currentColor;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            letter-spacing: 1px;
         }
         
         .status-charging {
-            background: rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.2);
             color: var(--success);
-            box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
-            animation: pulse-status 1.5s infinite;
-        }
-        
-        @keyframes pulse-status {
-            0%, 100% {
-                box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
-            }
-            50% {
-                box-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
-            }
+            border: 1px solid var(--success);
         }
         
         .status-available {
-            background: rgba(59, 130, 246, 0.3);
-            color: var(--info);
+            background: rgba(156, 163, 175, 0.2);
+            color: var(--text-secondary);
+            border: 1px solid var(--text-secondary);
         }
         
         .cp-metrics {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 18px;
-            position: relative;
-            z-index: 1;
+            gap: 12px;
         }
         
         .metric {
-            background: rgba(0, 0, 0, 0.35);
-            padding: 18px;
-            border-radius: 20px;
-            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-        }
-        
-        .metric:hover {
-            background: rgba(102, 126, 234, 0.25);
-            transform: scale(1.08) translateY(-5px);
-            border-color: rgba(102, 126, 234, 0.4);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            background: var(--bg-dark);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
         }
         
         .metric-label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-secondary);
-            margin-bottom: 10px;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
         }
         
         .metric-value {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
-            font-weight: 900;
+            font-size: 1.5rem;
+            font-weight: 700;
             color: var(--text-primary);
-            line-height: 1;
         }
         
         /* Chart Section */
         .chart-section {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px) saturate(180%);
-            border-radius: 35px;
-            padding: 40px;
-            margin-bottom: 50px;
-            border: 1px solid var(--card-border);
-            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
-            animation: fadeIn 1s ease-out 0.8s both;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
         }
         
         .chart-container {
             position: relative;
-            height: 450px;
-            margin-top: 30px;
-        }
-        
-        .chart-container canvas {
-            filter: drop-shadow(0 5px 30px rgba(102, 126, 234, 0.3));
+            height: 400px;
+            margin-top: 20px;
         }
         
         /* Footer */
         .footer {
             text-align: center;
-            padding: 40px;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.95rem;
-            font-weight: 400;
-            letter-spacing: 3px;
-            animation: fadeIn 1.5s ease-out 1s both;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            margin-top: 50px;
+            padding: 30px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
         }
         
-        .footer i {
-            color: var(--danger);
-            animation: heartbeat 1.5s infinite;
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
         }
         
-        @keyframes heartbeat {
-            0%, 100% {
-                transform: scale(1);
-            }
-            10%, 30% {
-                transform: scale(1.15);
-            }
-            20%, 40% {
-                transform: scale(1);
-            }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-card);
         }
         
-        /* Loading Spinner */
-        .loading {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: var(--text-primary);
-            animation: spin 0.8s linear infinite;
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 5px;
         }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
         }
         
-        /* Responsive Design */
+        /* Responsive */
         @media (max-width: 768px) {
-            .container {
-                padding: 20px 15px;
-            }
-            
             .header h1 {
-                font-size: 2.5rem;
+                font-size: 2rem;
             }
             
             .stats-grid,
@@ -756,56 +352,18 @@
                 grid-template-columns: 1fr;
             }
             
-            .stat-value {
-                font-size: 2.5rem;
-            }
-            
             .chart-container {
                 height: 300px;
             }
         }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 12px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary-gradient);
-            border-radius: 10px;
-            border: 2px solid rgba(0, 0, 0, 0.3);
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #764ba2, #667eea);
-        }
-        
-        /* Selection */
-        ::selection {
-            background: rgba(102, 126, 234, 0.5);
-            color: var(--text-primary);
-        }
     </style>
 </head>
-<body class="gpu-accelerated">
-    <!-- Advanced Background -->
-    <div class="bg-animation">
-        <div class="gradient-orb orb-1"></div>
-        <div class="gradient-orb orb-2"></div>
-        <div class="gradient-orb orb-3"></div>
-        <div id="particles-container"></div>
-    </div>
-    
+<body>
     <div class="container">
         <!-- Header -->
         <div class="header">
             <h1><i class="fas fa-bolt"></i> EV CHARGING STATION</h1>
-            <div class="header-subtitle">REAL-TIME MONITORING SYSTEM</div>
+            <div class="header-subtitle">Real-time Monitoring System</div>
             <div id="status-badge" class="status-badge status-stopped">
                 <span class="status-dot"></span>
                 <span>STANDBY</span>
@@ -818,13 +376,13 @@
                 <div class="stat-icon"><i class="fas fa-database"></i></div>
                 <div class="stat-label">Total Records</div>
                 <div class="stat-value" id="total-records">0</div>
-                <div class="stat-trend"><i class="fas fa-arrow-up"></i> Live Data</div>
+                <div class="stat-trend"><i class="fas fa-arrow-up"></i> Live</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-tachometer-alt"></i></div>
                 <div class="stat-label">Records/Second</div>
                 <div class="stat-value" id="records-per-second">0.0</div>
-                <div class="stat-trend"><i class="fas fa-chart-line"></i> Throughput</div>
+                <div class="stat-trend"><i class="fas fa-chart-line"></i> Rate</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-charging-station"></i></div>
@@ -835,8 +393,8 @@
             <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-clock"></i></div>
                 <div class="stat-label">Uptime</div>
-                <div class="stat-value" id="uptime" style="font-size: 2rem;">0s</div>
-                <div class="stat-trend"><i class="fas fa-hourglass-half"></i> Running Time</div>
+                <div class="stat-value" id="uptime" style="font-size: 1.8rem;">0s</div>
+                <div class="stat-trend"><i class="fas fa-hourglass-half"></i> Running</div>
             </div>
         </div>
         
@@ -847,11 +405,7 @@
                 Anomaly Detection
             </h2>
             <div class="anomaly-grid" id="anomaly-grid">
-                <div class="anomaly-card normal">
-                    <i class="fas fa-check-circle anomaly-icon"></i>
-                    <div class="anomaly-name">Normal</div>
-                    <div class="anomaly-count">0</div>
-                </div>
+                <!-- Populated by JS -->
             </div>
         </div>
         
@@ -861,7 +415,7 @@
             Charging Stations
         </h2>
         <div class="charge-points-grid" id="charge-points">
-            <!-- Cards will be dynamically inserted -->
+            <!-- Populated by JS -->
         </div>
         
         <!-- Power Chart -->
@@ -877,40 +431,16 @@
         
         <!-- Footer -->
         <div class="footer">
-            MADE WITH <i class="fas fa-heart"></i> FOR EV CHARGING SIMULATION | OCPP 1.6 PROTOCOL
+            Made with <i class="fas fa-heart" style="color: #dc2626;"></i> for EV Charging Simulation | OCPP 1.6
         </div>
     </div>
     
     <script>
-        // Optimized particle creation with requestAnimationFrame
-        function createParticles() {
-            const container = document.getElementById('particles-container');
-            const particleCount = 30; // Reduced for better performance
-            
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 12 + 's';
-                particle.style.animationDuration = (Math.random() * 8 + 8) + 's';
-                container.appendChild(particle);
-            }
-        }
-        
-        // Optimized animation with requestAnimationFrame
-        requestAnimationFrame(() => {
-            createParticles();
-        });
-        
-        // Socket.io connection
+        // Socket connection
         const socket = io();
         
-        // Chart setup with optimizations
-        const ctx = document.getElementById('powerChart').getContext('2d', {
-            alpha: false,
-            desynchronized: true
-        });
-        
+        // Chart setup - OPTIMIZED
+        const ctx = document.getElementById('powerChart').getContext('2d');
         const powerChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -920,11 +450,9 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: {
-                    duration: 300 // Faster animations
-                },
+                animation: false, // Disable animations for performance
                 interaction: {
-                    mode: 'index',
+                    mode: 'nearest',
                     intersect: false,
                 },
                 plugins: {
@@ -932,41 +460,22 @@
                         display: true,
                         position: 'top',
                         labels: {
-                            color: '#ffffff',
+                            color: '#9ca3af',
                             font: {
-                                family: 'Orbitron',
-                                size: 12,
-                                weight: 'bold'
+                                size: 11
                             },
-                            padding: 20,
-                            usePointStyle: true,
-                            pointStyle: 'circle'
+                            padding: 15,
+                            usePointStyle: true
                         }
                     },
                     tooltip: {
-                        enabled: true,
-                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                        backgroundColor: 'rgba(26, 26, 26, 0.95)',
                         titleColor: '#ffffff',
-                        bodyColor: '#ffffff',
-                        titleFont: {
-                            family: 'Orbitron',
-                            size: 14,
-                            weight: 'bold'
-                        },
-                        bodyFont: {
-                            family: 'Inter',
-                            size: 13
-                        },
-                        borderColor: 'rgba(102, 126, 234, 0.6)',
-                        borderWidth: 2,
-                        padding: 15,
-                        cornerRadius: 10,
-                        displayColors: true,
-                        callbacks: {
-                            label: function(context) {
-                                return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' kW';
-                            }
-                        }
+                        bodyColor: '#9ca3af',
+                        borderColor: '#dc2626',
+                        borderWidth: 1,
+                        padding: 10,
+                        displayColors: true
                     }
                 },
                 scales: {
@@ -975,67 +484,56 @@
                         title: {
                             display: true,
                             text: 'Power (kW)',
-                            color: '#ffffff',
-                            font: {
-                                family: 'Orbitron',
-                                size: 14,
-                                weight: 'bold'
-                            }
+                            color: '#9ca3af'
                         },
                         ticks: {
-                            color: 'rgba(255, 255, 255, 0.9)',
-                            font: {
-                                family: 'Orbitron',
-                                size: 11
-                            }
+                            color: '#9ca3af'
                         },
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.1)',
+                            color: '#2a2a2a',
                             drawBorder: false
                         }
                     },
                     x: {
                         ticks: {
-                            color: 'rgba(255, 255, 255, 0.9)',
-                            font: {
-                                family: 'Orbitron',
-                                size: 10
-                            },
-                            maxTicksLimit: 15
+                            color: '#9ca3af',
+                            maxTicksLimit: 10
                         },
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.05)',
+                            color: '#2a2a2a',
                             drawBorder: false
                         }
                     }
                 },
                 elements: {
                     line: {
-                        tension: 0.4,
-                        borderWidth: 3
+                        tension: 0.3,
+                        borderWidth: 2
                     },
                     point: {
                         radius: 0,
                         hitRadius: 10,
-                        hoverRadius: 7,
-                        hoverBorderWidth: 3
+                        hoverRadius: 4
                     }
                 }
             }
         });
         
-        // Throttled update function
-        let updateTimeout;
+        // Throttle updates to prevent lag
+        let updatePending = false;
         socket.on('stats_update', function(data) {
-            clearTimeout(updateTimeout);
-            updateTimeout = setTimeout(() => {
-                requestAnimationFrame(() => updateDashboard(data));
-            }, 100);
+            if (updatePending) return;
+            updatePending = true;
+            
+            setTimeout(() => {
+                updateDashboard(data);
+                updatePending = false;
+            }, 200); // Update max 5 times per second
         });
         
         function updateDashboard(data) {
-            // Update stats
-            animateValue('total-records', parseInt(document.getElementById('total-records').textContent.replace(/,/g, '') || 0), data.total_records, 400);
+            // Update stats - simple text update, no animation
+            document.getElementById('total-records').textContent = data.total_records.toLocaleString();
             document.getElementById('records-per-second').textContent = data.records_per_second.toFixed(1);
             document.getElementById('active-cps').textContent = data.charge_points.length;
             document.getElementById('uptime').textContent = formatUptime(data.uptime);
@@ -1056,174 +554,135 @@
             updateChart(data.recent_records);
         }
         
-        function animateValue(id, start, end, duration) {
-            const element = document.getElementById(id);
-            const range = end - start;
-            const increment = range / (duration / 16);
-            let current = start;
-            
-            const timer = setInterval(() => {
-                current += increment;
-                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
-                    element.textContent = end.toLocaleString();
-                    clearInterval(timer);
-                } else {
-                    element.textContent = Math.floor(current).toLocaleString();
-                }
-            }, 16);
-        }
-        
         function updateAnomalies(anomalyCounts) {
             const grid = document.getElementById('anomaly-grid');
-            const existingCards = Array.from(grid.children);
+            const existing = {};
+            Array.from(grid.children).forEach(card => {
+                existing[card.dataset.anomaly] = card;
+            });
             
-            const icons = {
-                'normal': 'fa-check-circle',
-                'dos': 'fa-exclamation-triangle',
-                'dos_attack': 'fa-exclamation-triangle',
-                'voltage_anomaly': 'fa-bolt',
-                'default': 'fa-exclamation-circle'
-            };
-            
-            // Update existing or create new
-            Object.entries(anomalyCounts).forEach(([anomaly, count], index) => {
-                let card = existingCards.find(c => c.dataset.anomaly === anomaly);
+            for (const [anomaly, count] of Object.entries(anomalyCounts)) {
+                let card = existing[anomaly];
                 
                 if (!card) {
                     card = document.createElement('div');
                     card.dataset.anomaly = anomaly;
-                    const isNormal = anomaly === 'normal';
-                    const icon = icons[anomaly] || icons['default'];
-                    
-                    card.className = `anomaly-card ${isNormal ? 'normal' : ''}`;
+                    card.className = `anomaly-card ${anomaly === 'normal' ? 'normal' : ''}`;
                     card.innerHTML = `
-                        <i class="fas ${icon} anomaly-icon"></i>
                         <div class="anomaly-name">${anomaly}</div>
                         <div class="anomaly-count">${count.toLocaleString()}</div>
                     `;
                     grid.appendChild(card);
-                    
-                    setTimeout(() => {
-                        card.style.animation = 'fadeInUp 0.5s ease-out both';
-                    }, index * 80);
                 } else {
                     card.querySelector('.anomaly-count').textContent = count.toLocaleString();
                 }
-            });
+            }
         }
         
         function updateChargePoints(chargePoints) {
             const container = document.getElementById('charge-points');
-            const existingCards = new Map(
-                Array.from(container.children).map(card => [card.dataset.cpId, card])
-            );
+            const existing = {};
+            Array.from(container.children).forEach(card => {
+                existing[card.dataset.cpId] = card;
+            });
             
-            chargePoints.forEach((cp, index) => {
-                let card = existingCards.get(cp.id);
+            chargePoints.forEach(cp => {
+                let card = existing[cp.id];
+                const status = cp.status.toLowerCase();
                 
                 if (!card) {
                     card = document.createElement('div');
                     card.dataset.cpId = cp.id;
-                    const status = cp.status.toLowerCase();
                     card.className = `cp-card ${status}`;
                     card.innerHTML = `
                         <div class="cp-header">
-                            <div class="cp-id">
-                                <i class="fas fa-charging-station"></i> ${cp.id}
-                            </div>
-                            <div class="cp-status status-${status}">
-                                ${cp.status}
-                            </div>
+                            <div class="cp-id"><i class="fas fa-charging-station"></i> ${cp.id}</div>
+                            <div class="cp-status status-${status}">${cp.status}</div>
                         </div>
                         <div class="cp-metrics">
                             <div class="metric">
-                                <div class="metric-label"><i class="fas fa-plug"></i> Voltage</div>
-                                <div class="metric-value">${cp.voltage.toFixed(1)}<small style="font-size:0.5em;">V</small></div>
+                                <div class="metric-label">Voltage</div>
+                                <div class="metric-value">${cp.voltage.toFixed(1)}V</div>
                             </div>
                             <div class="metric">
-                                <div class="metric-label"><i class="fas fa-bolt"></i> Current</div>
-                                <div class="metric-value">${cp.current.toFixed(1)}<small style="font-size:0.5em;">A</small></div>
+                                <div class="metric-label">Current</div>
+                                <div class="metric-value">${cp.current.toFixed(1)}A</div>
                             </div>
                             <div class="metric">
-                                <div class="metric-label"><i class="fas fa-tachometer-alt"></i> Power</div>
-                                <div class="metric-value">${cp.power_kw.toFixed(2)}<small style="font-size:0.5em;">kW</small></div>
+                                <div class="metric-label">Power</div>
+                                <div class="metric-value">${cp.power_kw.toFixed(2)}kW</div>
                             </div>
                             <div class="metric">
-                                <div class="metric-label"><i class="fas fa-battery-three-quarters"></i> Energy</div>
-                                <div class="metric-value">${cp.energy_kwh.toFixed(3)}<small style="font-size:0.5em;">kWh</small></div>
+                                <div class="metric-label">Energy</div>
+                                <div class="metric-value">${cp.energy_kwh.toFixed(3)}kWh</div>
                             </div>
                         </div>
                     `;
                     container.appendChild(card);
-                    
-                    setTimeout(() => {
-                        card.style.animation = 'fadeInUp 0.5s ease-out both';
-                    }, index * 60);
                 } else {
                     // Update existing card
-                    const status = cp.status.toLowerCase();
                     card.className = `cp-card ${status}`;
                     card.querySelector('.cp-status').className = `cp-status status-${status}`;
                     card.querySelector('.cp-status').textContent = cp.status;
                     
                     const metrics = card.querySelectorAll('.metric-value');
-                    metrics[0].innerHTML = `${cp.voltage.toFixed(1)}<small style="font-size:0.5em;">V</small>`;
-                    metrics[1].innerHTML = `${cp.current.toFixed(1)}<small style="font-size:0.5em;">A</small>`;
-                    metrics[2].innerHTML = `${cp.power_kw.toFixed(2)}<small style="font-size:0.5em;">kW</small>`;
-                    metrics[3].innerHTML = `${cp.energy_kwh.toFixed(3)}<small style="font-size:0.5em;">kWh</small>`;
+                    metrics[0].textContent = cp.voltage.toFixed(1) + 'V';
+                    metrics[1].textContent = cp.current.toFixed(1) + 'A';
+                    metrics[2].textContent = cp.power_kw.toFixed(2) + 'kW';
+                    metrics[3].textContent = cp.energy_kwh.toFixed(3) + 'kWh';
                 }
             });
         }
         
         const chartDataCache = {};
-        const maxDataPoints = 30;
+        const maxDataPoints = 25; // Reduced for performance
         
         function updateChart(recentRecords) {
             if (recentRecords.length === 0) return;
             
+            // Update cache
             recentRecords.forEach(record => {
                 if (!chartDataCache[record.cp_id]) {
                     chartDataCache[record.cp_id] = {
                         label: record.cp_id,
                         data: [],
                         borderColor: getColorForCP(record.cp_id),
-                        backgroundColor: getColorForCP(record.cp_id) + '30',
-                        fill: true,
-                        tension: 0.4,
-                        borderWidth: 3,
-                        pointRadius: 0,
-                        pointHoverRadius: 8,
-                        pointHoverBackgroundColor: getColorForCP(record.cp_id),
-                        pointHoverBorderColor: '#ffffff',
-                        pointHoverBorderWidth: 3
+                        backgroundColor: 'transparent',
+                        tension: 0.3,
+                        borderWidth: 2,
+                        pointRadius: 0
                     };
                 }
                 
-                chartDataCache[record.cp_id].data.push({
-                    x: record.timestamp,
-                    y: record.power
-                });
+                chartDataCache[record.cp_id].data.push(record.power);
                 
                 if (chartDataCache[record.cp_id].data.length > maxDataPoints) {
                     chartDataCache[record.cp_id].data.shift();
                 }
             });
             
+            // Update chart
             const datasets = Object.values(chartDataCache);
             powerChart.data.datasets = datasets;
             
             if (datasets.length > 0 && datasets[0].data.length > 0) {
-                powerChart.data.labels = datasets[0].data.map((_, i) => i);
+                powerChart.data.labels = Array.from({length: datasets[0].data.length}, (_, i) => i);
             }
             
-            powerChart.update('none');
+            powerChart.update('none'); // Update without animation
         }
         
         function getColorForCP(cpId) {
             const colors = {
-                'CP-000': '#10b981', 'CP-001': '#3b82f6', 'CP-002': '#f59e0b',
-                'CP-003': '#ef4444', 'CP-004': '#8b5cf6', 'CP-005': '#ec4899',
-                'CP-006': '#14b8a6', 'CP-007': '#f97316', 'CP-008': '#06b6d4',
+                'CP-000': '#10b981', 
+                'CP-001': '#3b82f6', 
+                'CP-002': '#f59e0b',
+                'CP-003': '#ef4444', 
+                'CP-004': '#8b5cf6', 
+                'CP-005': '#ec4899',
+                'CP-006': '#14b8a6', 
+                'CP-007': '#f97316', 
+                'CP-008': '#06b6d4',
                 'CP-009': '#84cc16'
             };
             return colors[cpId] || '#6b7280';
@@ -1242,7 +701,7 @@
         fetch('/api/stats')
             .then(res => res.json())
             .then(data => updateDashboard(data))
-            .catch(err => console.error('Error loading initial stats:', err));
+            .catch(err => console.error('Error:', err));
     </script>
 </body>
 </html>
