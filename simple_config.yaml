@@ -1,0 +1,17 @@
+# Simple EV Charging Simulation Config
+
+csms:
+  host: "127.0.0.1"
+  port: 9005
+
+simulation:
+  duration_seconds: 30  # 30 saniye
+  num_charge_points: 5  # Normal istasyonlar
+
+anomalies:
+  # DoS Attack - "Operasyonel Felç"
+  dos:
+    enabled: true
+    count: 3  # 3 saldırgan istasyon
+    duration: 25  # 25 saniye saldırı
+

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡Şarj İstasyonu Simülasyonu</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeIn 1s;
+        }
+        
+        .header h1 {
+            font-size: 3em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .status-running {
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-stopped {
+            background: #ef4444;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+        
+        .charge-points-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .cp-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            border-left: 5px solid #10b981;
+        }
+        
+        .cp-card.charging {
+            border-left-color: #10b981;
+            animation: pulse-border 2s infinite;
+        }
+        
+        .cp-card.available {
+            border-left-color: #3b82f6;
+        }
+        
+        .cp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .cp-id {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        .cp-status {
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        
+        .status-charging {
+            background: #10b981;
+        }
+        
+        .status-available {
+            background: #3b82f6;
+        }
+        
+        .cp-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .metric {
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .metric-label {
+            font-size: 0.75em;
+            opacity: 0.8;
+        }
+        
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .anomaly-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .anomaly-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .anomaly-card {
+            background: rgba(239, 68, 68, 0.2);
+            border-left: 4px solid #ef4444;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .anomaly-card.normal {
+            background: rgba(16, 185, 129, 0.2);
+            border-left-color: #10b981;
+        }
+        
+        .anomaly-name {
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+        
+        .anomaly-count {
+            font-size: 2em;
+            font-weight: bold;
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            height: 400px;  /* Sabit yükseklik */
+        }
+        
+        .chart-container canvas {
+            max-height: 350px !important;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        @keyframes pulse-border {
+            0%, 100% { border-left-width: 5px; }
+            50% { border-left-width: 8px; }
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            opacity: 0.7;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚡ EV Şarj İstasyonu Simülasyonu</h1>
+        <div id="status-badge" class="status-badge status-stopped">
+            ⏸️ Durduruldu
+        </div>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">📊 Toplam Kayıt</div>
+            <div class="stat-value" id="total-records">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">⚡ Kayıt/Saniye</div>
+            <div class="stat-value" id="records-per-second">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">🔌 Aktif Şarj Noktası</div>
+            <div class="stat-value" id="active-cps">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">⏱️ Çalışma Süresi</div>
+            <div class="stat-value" id="uptime">0s</div>
+        </div>
+    </div>
+    
+    <h2 style="margin-bottom: 20px;">🚨 Anomali Dağılımı</h2>
+    <div class="anomaly-section">
+        <div class="anomaly-grid" id="anomaly-grid">
+            <!-- Anomaly cards will be inserted here -->
+        </div>
+    </div>
+    
+    <h2 style="margin-bottom: 20px;">🔌 Şarj Noktaları</h2>
+    <div class="charge-points-grid" id="charge-points">
+        <!-- Charge point cards will be inserted here -->
+    </div>
+    
+    <div class="chart-container">
+        <h2 style="margin-bottom: 20px;">📈 Gerçek Zamanlı Güç Grafiği</h2>
+        <canvas id="powerChart"></canvas>
+    </div>
+    
+    <div class="footer">
+        Made with ❤️ for EV Charging Simulation | Real-time Dashboard
+    </div>
+    
+    <script>
+        const socket = io();
+        
+        // Chart setup
+        const ctx = document.getElementById('powerChart').getContext('2d');
+        const powerChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 2.5,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Güç (kW)',
+                            color: '#fff'
+                        },
+                        ticks: { color: '#fff' },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    },
+                    x: {
+                        ticks: { color: '#fff' },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: '#fff' }
+                    }
+                }
+            }
+        });
+        
+        // Update dashboard
+        socket.on('stats_update', function(data) {
+            // Update main stats
+            document.getElementById('total-records').textContent = data.total_records.toLocaleString();
+            document.getElementById('records-per-second').textContent = data.records_per_second.toFixed(1);
+            document.getElementById('active-cps').textContent = data.charge_points.length;
+            document.getElementById('uptime').textContent = formatUptime(data.uptime);
+            
+            // Update status badge
+            const badge = document.getElementById('status-badge');
+            if (data.is_running) {
+                badge.className = 'status-badge status-running';
+                badge.textContent = '▶️ Çalışıyor';
+            } else {
+                badge.className = 'status-badge status-stopped';
+                badge.textContent = '⏸️ Durduruldu';
+            }
+            
+            // Update anomalies
+            updateAnomalies(data.anomaly_counts);
+            
+            // Update charge points
+            updateChargePoints(data.charge_points);
+            
+            // Update chart
+            updateChart(data.recent_records);
+        });
+        
+        function updateAnomalies(anomalyCounts) {
+            const grid = document.getElementById('anomaly-grid');
+            grid.innerHTML = '';
+            
+            for (const [anomaly, count] of Object.entries(anomalyCounts)) {
+                const card = document.createElement('div');
+                card.className = `anomaly-card ${anomaly === 'normal' ? 'normal' : ''}`;
+                card.innerHTML = `
+                    <div class="anomaly-name">${anomaly}</div>
+                    <div class="anomaly-count">${count.toLocaleString()}</div>
+                `;
+                grid.appendChild(card);
+            }
+        }
+        
+        function updateChargePoints(chargePoints) {
+            const container = document.getElementById('charge-points');
+            container.innerHTML = '';
+            
+            chargePoints.forEach(cp => {
+                const card = document.createElement('div');
+                const status = cp.status.toLowerCase();
+                card.className = `cp-card ${status}`;
+                card.innerHTML = `
+                    <div class="cp-header">
+                        <div class="cp-id">${cp.id}</div>
+                        <div class="cp-status status-${status}">${cp.status}</div>
+                    </div>
+                    <div class="cp-metrics">
+                        <div class="metric">
+                            <div class="metric-label">Voltaj</div>
+                            <div class="metric-value">${cp.voltage.toFixed(1)}V</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Akım</div>
+                            <div class="metric-value">${cp.current.toFixed(1)}A</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Güç</div>
+                            <div class="metric-value">${cp.power_kw.toFixed(2)}kW</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Enerji</div>
+                            <div class="metric-value">${cp.energy_kwh.toFixed(3)}kWh</div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+        
+        const chartDataCache = {};
+        const maxDataPoints = 30;
+        
+        function updateChart(recentRecords) {
+            if (recentRecords.length === 0) return;
+            
+            // Update cache with new records
+            recentRecords.forEach(record => {
+                if (!chartDataCache[record.cp_id]) {
+                    chartDataCache[record.cp_id] = {
+                        label: record.cp_id,
+                        data: [],
+                        borderColor: getColorForCP(record.cp_id),
+                        backgroundColor: getColorForCP(record.cp_id) + '20',
+                        tension: 0.3,
+                        borderWidth: 2,
+                        pointRadius: 0
+                    };
+                }
+                
+                // Add new data point
+                chartDataCache[record.cp_id].data.push({
+                    x: record.timestamp,
+                    y: record.power
+                });
+                
+                // Keep only last N points
+                if (chartDataCache[record.cp_id].data.length > maxDataPoints) {
+                    chartDataCache[record.cp_id].data.shift();
+                }
+            });
+            
+            // Update chart
+            const datasets = Object.values(chartDataCache);
+            powerChart.data.datasets = datasets;
+            
+            // Update labels (time-based)
+            if (datasets.length > 0 && datasets[0].data.length > 0) {
+                powerChart.data.labels = datasets[0].data.map((_, i) => i);
+            }
+            
+            powerChart.update('none');
+        }
+        
+        function getColorForCP(cpId) {
+            const colors = {
+                'CP-000': '#10b981', 'CP-001': '#3b82f6', 'CP-002': '#f59e0b',
+                'CP-003': '#ef4444', 'CP-004': '#8b5cf6', 'CP-005': '#ec4899',
+                'CP-006': '#14b8a6', 'CP-007': '#f97316', 'CP-008': '#06b6d4',
+                'CP-009': '#84cc16'
+            };
+            return colors[cpId] || '#6b7280';
+        }
+        
+        function formatUptime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            return `${h}h ${m}m ${s}s`;
+        }
+        
+        function getRandomColor() {
+            const colors = [
+                '#10b981', '#3b82f6', '#f59e0b', '#ef4444', 
+                '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+        
+        // Initial load
+        fetch('/api/stats')
+            .then(res => res.json())
+            .then(data => {
+                socket.emit('stats_update', data);
+            });
+    </script>
+</body>
+</html>
+

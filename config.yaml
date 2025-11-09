@@ -1,0 +1,173 @@
+# EV Charging Station Simulation Configuration
+
+simulation:
+  duration_seconds: 3600  # 1 hour simulation
+  charge_points: 10
+  central_system_host: "0.0.0.0"
+  central_system_port: 9000
+  heartbeat_interval: 5  # seconds
+  meter_values_interval: 1  # seconds
+  log_file: "data/logs/simulation.jsonl"
+  csv_output: "data/processed/dataset.csv"
+
+charge_point:
+  voltage_nominal: 400.0
+  voltage_noise_std: 2.0
+  current_max: 32.0
+  power_nominal: 7.4  # kW
+  energy_rate: 0.002  # kWh per second (7.2 kW)
+
+# Anomaly Scenarios Configuration
+anomalies:
+  enabled: true
+  
+  # 1. Replay Attack
+  replay_attack:
+    enabled: true
+    start_time: 300  # seconds after simulation start
+    duration: 180
+    target_cps: [0, 1, 2]  # which charge points to attack
+    replay_delay: 10  # seconds old messages to replay
+    frequency: 5  # messages per second
+    
+  # 2. False Data Injection (FDI)
+  false_data_injection:
+    enabled: true
+    start_time: 600
+    duration: 240
+    target_cps: [3, 4]
+    voltage_change_percent: 20  # +/- 20%
+    current_change_percent: 30
+    random_noise_factor: 5.0
+    
+  # 3. Man-in-the-Middle / Message Tampering
+  message_tampering:
+    enabled: true
+    start_time: 900
+    duration: 150
+    target_cps: [5, 6]
+    tamper_transaction_id: true
+    tamper_meter_values: true
+    signature_corruption: true
+    
+  # 4. Denial of Service (DoS)
+  dos_attack:
+    enabled: true
+    start_time: 1200
+    duration: 120
+    target_cps: [7, 8]
+    heartbeat_frequency: 100  # messages per second
+    connection_flood: true
+    
+  # 5. Firmware Tampering / Unauthorized Command
+  firmware_tampering:
+    enabled: true
+    start_time: 1500
+    duration: 180
+    target_cps: [1, 3, 5]
+    unauthorized_commands: true
+    out_of_session_updates: true
+    
+  # 6. Session Hijacking / Unauthorized Start
+  session_hijacking:
+    enabled: true
+    start_time: 1800
+    duration: 200
+    target_cps: [0, 2, 4]
+    fake_id_tags: ["UNAUTHORIZED_001", "HIJACK_002"]
+    
+  # 7. Meter Manipulation
+  meter_manipulation:
+    enabled: true
+    start_time: 2100
+    duration: 300
+    target_cps: [6, 7, 8]
+    underreport_factor: 0.5  # report 50% of actual energy
+    inconsistency_pattern: "irregular"
+    
+  # 8. Timing Attack / Delay
+  timing_attack:
+    enabled: true
+    start_time: 2500
+    duration: 180
+    target_cps: [1, 4, 9]
+    artificial_delay_ms: [500, 1000, 2000]  # random delays
+    timeout_trigger: true
+    
+  # 9. Calibration Drift
+  calibration_drift:
+    enabled: true
+    start_time: 100  # starts early, gradual
+    duration: 3000  # long duration
+    target_cps: [9]
+    drift_rate: 0.001  # 0.1% per 100 seconds
+    linear_increase: true
+
+# Data Generation Parameters
+data_generation:
+  target_records: 200000  # minimum target
+  normal_percentage: 75  # 75% normal data
+  min_samples_per_anomaly: 5000
+  
+# Feature Engineering
+feature_engineering:
+  window_sizes: [10, 30, 60]  # seconds
+  features:
+    - mean
+    - std
+    - min
+    - max
+    - delta
+    - slope
+    - entropy
+    
+# Model Training Configuration
+model_training:
+  train_split: 0.70
+  val_split: 0.15
+  test_split: 0.15
+  
+  balance_classes: true
+  use_smote: true
+  
+  models:
+    - name: "random_forest"
+      enabled: true
+      n_estimators: 200
+      max_depth: 20
+      
+    - name: "xgboost"
+      enabled: true
+      n_estimators: 300
+      learning_rate: 0.1
+      max_depth: 10
+      
+    - name: "lstm"
+      enabled: true
+      hidden_size: 128
+      num_layers: 2
+      epochs: 50
+      
+    - name: "autoencoder"
+      enabled: true
+      encoding_dim: 32
+      epochs: 50
+      
+  target_tpr: 0.95  # 95% minimum recall per attack class
+  max_fpr: 0.05  # 5% maximum false positive rate
+
+# Evaluation Configuration
+evaluation:
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1_score
+    - roc_auc
+    - pr_auc
+    - confusion_matrix
+  
+  per_class_report: true
+  threshold_optimization: true
+  cross_validation_folds: 5
+
