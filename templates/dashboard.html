@@ -7,7 +7,7 @@
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -15,16 +15,38 @@
             box-sizing: border-box;
         }
         
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            --bg-gradient: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+        }
+        
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-            color: #ffffff;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-primary);
             overflow-x: hidden;
             min-height: 100vh;
             position: relative;
         }
         
-        /* Animated Background */
+        /* GPU Acceleration */
+        .gpu-accelerated {
+            will-change: transform;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            perspective: 1000px;
+        }
+        
+        /* Animated Background with Mesh Gradient */
         .bg-animation {
             position: fixed;
             top: 0;
@@ -33,20 +55,71 @@
             height: 100%;
             z-index: -1;
             overflow: hidden;
+            background: var(--bg-gradient);
+        }
+        
+        .gradient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: float-orb 20s infinite ease-in-out;
+            will-change: transform;
+        }
+        
+        .orb-1 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, #667eea, transparent);
+            top: -100px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+        
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, #764ba2, transparent);
+            top: 50%;
+            right: -100px;
+            animation-delay: -7s;
+        }
+        
+        .orb-3 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, #f093fb, transparent);
+            bottom: -200px;
+            left: 30%;
+            animation-delay: -14s;
+        }
+        
+        @keyframes float-orb {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(50px, -50px) scale(1.1);
+            }
+            66% {
+                transform: translate(-30px, 30px) scale(0.9);
+            }
         }
         
         .particle {
             position: absolute;
-            width: 4px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.5);
+            width: 3px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.6);
             border-radius: 50%;
-            animation: float 15s infinite ease-in-out;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            animation: float 12s infinite ease-in-out;
+            will-change: transform, opacity;
         }
         
         @keyframes float {
-            0%, 100% {
-                transform: translateY(0) translateX(0);
+            0% {
+                transform: translateY(100vh) translateX(0) scale(0);
                 opacity: 0;
             }
             10% {
@@ -56,7 +129,7 @@
                 opacity: 1;
             }
             100% {
-                transform: translateY(-100vh) translateX(100px);
+                transform: translateY(-100px) translateX(100px) scale(1);
                 opacity: 0;
             }
         }
@@ -65,91 +138,127 @@
         .container {
             max-width: 1600px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 30px 20px;
             position: relative;
             z-index: 1;
         }
         
-        /* Header */
+        /* Header with Neon Effect */
         .header {
             text-align: center;
-            margin-bottom: 40px;
-            animation: slideDown 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            margin-bottom: 50px;
+            animation: slideDown 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             position: relative;
         }
         
         @keyframes slideDown {
             0% {
                 opacity: 0;
-                transform: translateY(-50px);
+                transform: translateY(-80px) scale(0.9);
             }
             100% {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
             }
         }
         
         .header h1 {
-            font-size: clamp(2rem, 5vw, 4rem);
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2.5rem, 6vw, 5rem);
             font-weight: 900;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background: var(--primary-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-shadow: 0 0 80px rgba(102, 126, 234, 0.5);
             margin-bottom: 15px;
-            letter-spacing: -2px;
+            letter-spacing: -3px;
+            position: relative;
+            display: inline-block;
+            filter: drop-shadow(0 0 30px rgba(102, 126, 234, 0.8));
+            animation: glow-pulse 3s infinite;
+        }
+        
+        @keyframes glow-pulse {
+            0%, 100% {
+                filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.6));
+            }
+            50% {
+                filter: drop-shadow(0 0 40px rgba(102, 126, 234, 1));
+            }
         }
         
         .header-subtitle {
-            font-size: 1.2rem;
-            color: rgba(255, 255, 255, 0.6);
-            font-weight: 300;
-            letter-spacing: 2px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 400;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
         }
         
-        /* Status Badge */
+        /* Status Badge with Advanced Animation */
         .status-badge {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            padding: 12px 30px;
+            gap: 12px;
+            padding: 14px 35px;
             border-radius: 50px;
-            font-weight: 600;
-            font-size: 1rem;
-            margin-top: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 25px;
             backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .status-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .status-badge:hover::before {
+            left: 100%;
         }
         
         .status-running {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.5));
-            border-color: #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.4), rgba(5, 150, 105, 0.6));
+            border-color: var(--success);
             animation: pulse-glow 2s infinite;
         }
         
         .status-stopped {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.5));
-            border-color: #ef4444;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(220, 38, 38, 0.6));
+            border-color: var(--danger);
         }
         
         @keyframes pulse-glow {
             0%, 100% {
-                box-shadow: 0 0 20px rgba(16, 185, 129, 0.5), 0 0 40px rgba(16, 185, 129, 0.3);
+                box-shadow: 0 0 20px rgba(16, 185, 129, 0.5), 0 0 40px rgba(16, 185, 129, 0.3), inset 0 0 20px rgba(16, 185, 129, 0.2);
             }
             50% {
-                box-shadow: 0 0 30px rgba(16, 185, 129, 0.8), 0 0 60px rgba(16, 185, 129, 0.5);
+                box-shadow: 0 0 35px rgba(16, 185, 129, 0.8), 0 0 60px rgba(16, 185, 129, 0.5), inset 0 0 30px rgba(16, 185, 129, 0.4);
             }
         }
         
         .status-dot {
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
             background: currentColor;
-            animation: pulse-dot 1.5s infinite;
+            box-shadow: 0 0 15px currentColor;
+            animation: pulse-dot 1.2s infinite;
         }
         
         @keyframes pulse-dot {
@@ -158,41 +267,47 @@
                 opacity: 1;
             }
             50% {
-                transform: scale(1.2);
+                transform: scale(1.3);
                 opacity: 0.7;
             }
         }
         
-        /* Stats Grid */
+        /* Stats Grid with Stagger Animation */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 25px;
-            margin-bottom: 40px;
-            animation: fadeIn 1s ease-out 0.2s both;
+            margin-bottom: 50px;
         }
         
-        @keyframes fadeIn {
+        .stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 30px;
+            padding: 35px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--card-border);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out both;
+            will-change: transform;
+        }
+        
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+        
+        @keyframes fadeInUp {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(40px);
             }
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
-        }
-        
-        .stat-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border-radius: 25px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-            overflow: hidden;
         }
         
         .stat-card::before {
@@ -202,174 +317,224 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), transparent);
+            background: var(--primary-gradient);
             opacity: 0;
-            transition: opacity 0.4s;
+            transition: opacity 0.5s;
+            z-index: -1;
         }
         
         .stat-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
-            border-color: rgba(102, 126, 234, 0.5);
+            transform: translateY(-15px) scale(1.03) rotateX(5deg);
+            box-shadow: 0 30px 80px rgba(102, 126, 234, 0.4);
+            border-color: rgba(102, 126, 234, 0.6);
         }
         
         .stat-card:hover::before {
-            opacity: 1;
+            opacity: 0.15;
         }
         
         .stat-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            background: var(--primary-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.5));
+            filter: drop-shadow(0 0 25px rgba(102, 126, 234, 0.6));
+            animation: icon-float 3s infinite ease-in-out;
+        }
+        
+        @keyframes icon-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
         
         .stat-label {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 10px;
-            font-weight: 500;
-            letter-spacing: 1px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            font-weight: 600;
+            letter-spacing: 2px;
             text-transform: uppercase;
         }
         
         .stat-value {
-            font-size: 3rem;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.2rem;
             font-weight: 900;
-            background: linear-gradient(135deg, #ffffff, #a78bfa);
+            background: linear-gradient(135deg, #ffffff, #e0e7ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            line-height: 1;
-            margin-bottom: 5px;
+            line-height: 1.2;
+            margin-bottom: 8px;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
         }
         
         .stat-trend {
-            font-size: 0.85rem;
-            color: #10b981;
-            font-weight: 600;
-            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--success);
+            font-weight: 700;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         
-        /* Section Title */
+        .stat-trend i {
+            animation: bounce 1.5s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        /* Section Titles */
         .section-title {
-            font-size: 2rem;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
             font-weight: 700;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             display: flex;
             align-items: center;
             gap: 15px;
-            color: #ffffff;
+            color: var(--text-primary);
             animation: fadeIn 1s ease-out;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100px;
+            height: 3px;
+            background: var(--primary-gradient);
+            border-radius: 3px;
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.6);
         }
         
         .section-title i {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: var(--primary-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.6));
         }
         
         /* Anomaly Section */
         .anomaly-container {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border-radius: 30px;
-            padding: 35px;
-            margin-bottom: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            animation: fadeIn 1s ease-out 0.4s both;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 35px;
+            padding: 40px;
+            margin-bottom: 50px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 1s ease-out 0.5s both;
         }
         
         .anomaly-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 25px;
         }
         
         .anomaly-card {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.05));
-            border: 2px solid rgba(239, 68, 68, 0.3);
-            padding: 25px;
-            border-radius: 20px;
-            transition: all 0.3s ease;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+            border: 2px solid rgba(239, 68, 68, 0.4);
+            padding: 30px;
+            border-radius: 25px;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             position: relative;
             overflow: hidden;
+            backdrop-filter: blur(10px);
+            cursor: pointer;
         }
         
         .anomaly-card::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transition: left 0.5s;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s;
         }
         
         .anomaly-card:hover::after {
             left: 100%;
+            top: 100%;
         }
         
         .anomaly-card.normal {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.05));
-            border-color: rgba(16, 185, 129, 0.3);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+            border-color: rgba(16, 185, 129, 0.4);
         }
         
         .anomaly-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(239, 68, 68, 0.3);
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 20px 50px rgba(239, 68, 68, 0.4);
+            border-color: rgba(239, 68, 68, 0.8);
         }
         
         .anomaly-card.normal:hover {
-            box-shadow: 0 15px 40px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 20px 50px rgba(16, 185, 129, 0.4);
+            border-color: rgba(16, 185, 129, 0.8);
         }
         
         .anomaly-name {
-            font-size: 0.95rem;
-            margin-bottom: 12px;
-            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.95);
         }
         
         .anomaly-count {
-            font-size: 2.5rem;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
             font-weight: 900;
-            color: #ffffff;
+            color: var(--text-primary);
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
         }
         
         .anomaly-icon {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 2rem;
-            opacity: 0.2;
+            top: 25px;
+            right: 25px;
+            font-size: 2.5rem;
+            opacity: 0.15;
+            animation: rotate-slow 10s infinite linear;
         }
         
-        /* Charge Points */
+        @keyframes rotate-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Charge Points Grid */
         .charge-points-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
-            animation: fadeIn 1s ease-out 0.6s both;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
         }
         
         .cp-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border-radius: 25px;
-            padding: 25px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
             border: 2px solid transparent;
-            transition: all 0.4s ease;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             position: relative;
             overflow: hidden;
         }
@@ -379,10 +544,10 @@
             position: absolute;
             left: 0;
             top: 0;
-            width: 5px;
+            width: 6px;
             height: 100%;
-            background: linear-gradient(180deg, #667eea, #764ba2);
-            transition: width 0.4s;
+            background: var(--primary-gradient);
+            transition: width 0.5s;
         }
         
         .cp-card:hover::before {
@@ -391,137 +556,161 @@
         }
         
         .cp-card.charging {
-            border-color: rgba(16, 185, 129, 0.5);
-            animation: charging-pulse 2s infinite;
+            border-color: rgba(16, 185, 129, 0.6);
+            animation: charging-pulse 2.5s infinite;
         }
         
         @keyframes charging-pulse {
             0%, 100% {
-                box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+                box-shadow: 0 0 25px rgba(16, 185, 129, 0.4), inset 0 0 20px rgba(16, 185, 129, 0.1);
             }
             50% {
-                box-shadow: 0 0 40px rgba(16, 185, 129, 0.6);
+                box-shadow: 0 0 50px rgba(16, 185, 129, 0.7), inset 0 0 40px rgba(16, 185, 129, 0.2);
             }
         }
         
         .cp-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+            transform: translateY(-12px) scale(1.03);
+            box-shadow: 0 25px 70px rgba(102, 126, 234, 0.5);
+            border-color: rgba(102, 126, 234, 0.6);
         }
         
         .cp-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             position: relative;
             z-index: 1;
         }
         
         .cp-id {
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 900;
             background: linear-gradient(135deg, #ffffff, #a78bfa);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
         .cp-status {
-            padding: 8px 18px;
-            border-radius: 20px;
+            padding: 10px 20px;
+            border-radius: 25px;
             font-size: 0.85rem;
-            font-weight: 600;
+            font-weight: 700;
             backdrop-filter: blur(10px);
-            border: 1px solid currentColor;
+            border: 2px solid currentColor;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
         }
         
         .status-charging {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.3);
+            color: var(--success);
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
+            animation: pulse-status 1.5s infinite;
+        }
+        
+        @keyframes pulse-status {
+            0%, 100% {
+                box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
+            }
         }
         
         .status-available {
-            background: rgba(59, 130, 246, 0.2);
-            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.3);
+            color: var(--info);
         }
         
         .cp-metrics {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 18px;
             position: relative;
             z-index: 1;
         }
         
         .metric {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 15px;
-            border-radius: 15px;
-            transition: all 0.3s ease;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 18px;
+            border-radius: 20px;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
         }
         
         .metric:hover {
-            background: rgba(102, 126, 234, 0.2);
-            transform: scale(1.05);
-            border-color: rgba(102, 126, 234, 0.3);
+            background: rgba(102, 126, 234, 0.25);
+            transform: scale(1.08) translateY(-5px);
+            border-color: rgba(102, 126, 234, 0.4);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
         }
         
         .metric-label {
             font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 8px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         
         .metric-value {
-            font-size: 1.8rem;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
             font-weight: 900;
-            color: #ffffff;
+            color: var(--text-primary);
             line-height: 1;
         }
         
         /* Chart Section */
         .chart-section {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border-radius: 30px;
-            padding: 35px;
-            margin-bottom: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 35px;
+            padding: 40px;
+            margin-bottom: 50px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
             animation: fadeIn 1s ease-out 0.8s both;
         }
         
         .chart-container {
             position: relative;
-            height: 400px;
-            margin-top: 25px;
+            height: 450px;
+            margin-top: 30px;
         }
         
         .chart-container canvas {
-            filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.3));
+            filter: drop-shadow(0 5px 30px rgba(102, 126, 234, 0.3));
         }
         
         /* Footer */
         .footer {
             text-align: center;
-            padding: 30px;
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 0.9rem;
-            font-weight: 300;
-            letter-spacing: 2px;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.95rem;
+            font-weight: 400;
+            letter-spacing: 3px;
             animation: fadeIn 1.5s ease-out 1s both;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 50px;
         }
         
         .footer i {
-            color: #ef4444;
+            color: var(--danger);
             animation: heartbeat 1.5s infinite;
         }
         
@@ -529,72 +718,88 @@
             0%, 100% {
                 transform: scale(1);
             }
-            25% {
-                transform: scale(1.2);
+            10%, 30% {
+                transform: scale(1.15);
             }
-            50% {
+            20%, 40% {
                 transform: scale(1);
             }
         }
         
-        /* Loading Animation */
+        /* Loading Spinner */
         .loading {
             display: inline-block;
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             border: 3px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s linear infinite;
+            border-top-color: var(--text-primary);
+            animation: spin 0.8s linear infinite;
         }
         
         @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+            to { transform: rotate(360deg); }
         }
         
-        /* Responsive */
+        /* Responsive Design */
         @media (max-width: 768px) {
             .container {
-                padding: 15px;
+                padding: 20px 15px;
             }
             
             .header h1 {
                 font-size: 2.5rem;
             }
             
-            .stats-grid {
+            .stats-grid,
+            .charge-points-grid {
                 grid-template-columns: 1fr;
             }
             
             .stat-value {
                 font-size: 2.5rem;
             }
+            
+            .chart-container {
+                height: 300px;
+            }
         }
         
-        /* Scrollbar */
+        /* Custom Scrollbar */
         ::-webkit-scrollbar {
-            width: 10px;
+            width: 12px;
         }
         
         ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.2);
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, #667eea, #764ba2);
+            background: rgba(0, 0, 0, 0.3);
             border-radius: 10px;
         }
         
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-gradient);
+            border-radius: 10px;
+            border: 2px solid rgba(0, 0, 0, 0.3);
+        }
+        
         ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, #764ba2, #667eea);
+            background: linear-gradient(135deg, #764ba2, #667eea);
+        }
+        
+        /* Selection */
+        ::selection {
+            background: rgba(102, 126, 234, 0.5);
+            color: var(--text-primary);
         }
     </style>
 </head>
-<body>
-    <!-- Animated Background -->
-    <div class="bg-animation" id="bgAnimation"></div>
+<body class="gpu-accelerated">
+    <!-- Advanced Background -->
+    <div class="bg-animation">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+        <div id="particles-container"></div>
+    </div>
     
     <div class="container">
         <!-- Header -->
@@ -677,25 +882,35 @@
     </div>
     
     <script>
-        // Create animated particles
+        // Optimized particle creation with requestAnimationFrame
         function createParticles() {
-            const container = document.getElementById('bgAnimation');
-            for (let i = 0; i < 50; i++) {
+            const container = document.getElementById('particles-container');
+            const particleCount = 30; // Reduced for better performance
+            
+            for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement('div');
                 particle.className = 'particle';
                 particle.style.left = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 15 + 's';
-                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                particle.style.animationDelay = Math.random() * 12 + 's';
+                particle.style.animationDuration = (Math.random() * 8 + 8) + 's';
                 container.appendChild(particle);
             }
         }
-        createParticles();
+        
+        // Optimized animation with requestAnimationFrame
+        requestAnimationFrame(() => {
+            createParticles();
+        });
         
         // Socket.io connection
         const socket = io();
         
-        // Chart setup
-        const ctx = document.getElementById('powerChart').getContext('2d');
+        // Chart setup with optimizations
+        const ctx = document.getElementById('powerChart').getContext('2d', {
+            alpha: false,
+            desynchronized: true
+        });
+        
         const powerChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -705,6 +920,9 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                    duration: 300 // Faster animations
+                },
                 interaction: {
                     mode: 'index',
                     intersect: false,
@@ -716,21 +934,33 @@
                         labels: {
                             color: '#ffffff',
                             font: {
+                                family: 'Orbitron',
                                 size: 12,
                                 weight: 'bold'
                             },
-                            padding: 15,
+                            padding: 20,
                             usePointStyle: true,
                             pointStyle: 'circle'
                         }
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        enabled: true,
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
                         titleColor: '#ffffff',
                         bodyColor: '#ffffff',
-                        borderColor: 'rgba(102, 126, 234, 0.5)',
-                        borderWidth: 1,
-                        padding: 12,
+                        titleFont: {
+                            family: 'Orbitron',
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            family: 'Inter',
+                            size: 13
+                        },
+                        borderColor: 'rgba(102, 126, 234, 0.6)',
+                        borderWidth: 2,
+                        padding: 15,
+                        cornerRadius: 10,
                         displayColors: true,
                         callbacks: {
                             label: function(context) {
@@ -747,13 +977,15 @@
                             text: 'Power (kW)',
                             color: '#ffffff',
                             font: {
+                                family: 'Orbitron',
                                 size: 14,
                                 weight: 'bold'
                             }
                         },
                         ticks: {
-                            color: 'rgba(255, 255, 255, 0.8)',
+                            color: 'rgba(255, 255, 255, 0.9)',
                             font: {
+                                family: 'Orbitron',
                                 size: 11
                             }
                         },
@@ -764,9 +996,10 @@
                     },
                     x: {
                         ticks: {
-                            color: 'rgba(255, 255, 255, 0.8)',
+                            color: 'rgba(255, 255, 255, 0.9)',
                             font: {
-                                size: 11
+                                family: 'Orbitron',
+                                size: 10
                             },
                             maxTicksLimit: 15
                         },
@@ -784,16 +1017,25 @@
                     point: {
                         radius: 0,
                         hitRadius: 10,
-                        hoverRadius: 6
+                        hoverRadius: 7,
+                        hoverBorderWidth: 3
                     }
                 }
             }
         });
         
-        // Update dashboard
+        // Throttled update function
+        let updateTimeout;
         socket.on('stats_update', function(data) {
-            // Update main stats with animation
-            animateValue('total-records', parseInt(document.getElementById('total-records').textContent.replace(/,/g, '')), data.total_records, 500);
+            clearTimeout(updateTimeout);
+            updateTimeout = setTimeout(() => {
+                requestAnimationFrame(() => updateDashboard(data));
+            }, 100);
+        });
+        
+        function updateDashboard(data) {
+            // Update stats
+            animateValue('total-records', parseInt(document.getElementById('total-records').textContent.replace(/,/g, '') || 0), data.total_records, 400);
             document.getElementById('records-per-second').textContent = data.records_per_second.toFixed(1);
             document.getElementById('active-cps').textContent = data.charge_points.length;
             document.getElementById('uptime').textContent = formatUptime(data.uptime);
@@ -812,7 +1054,7 @@
             updateAnomalies(data.anomaly_counts);
             updateChargePoints(data.charge_points);
             updateChart(data.recent_records);
-        });
+        }
         
         function animateValue(id, start, end, duration) {
             const element = document.getElementById(id);
@@ -833,7 +1075,7 @@
         
         function updateAnomalies(anomalyCounts) {
             const grid = document.getElementById('anomaly-grid');
-            grid.innerHTML = '';
+            const existingCards = Array.from(grid.children);
             
             const icons = {
                 'normal': 'fa-check-circle',
@@ -843,68 +1085,93 @@
                 'default': 'fa-exclamation-circle'
             };
             
-            for (const [anomaly, count] of Object.entries(anomalyCounts)) {
-                const card = document.createElement('div');
-                const isNormal = anomaly === 'normal';
-                const icon = icons[anomaly] || icons['default'];
+            // Update existing or create new
+            Object.entries(anomalyCounts).forEach(([anomaly, count], index) => {
+                let card = existingCards.find(c => c.dataset.anomaly === anomaly);
                 
-                card.className = `anomaly-card ${isNormal ? 'normal' : ''}`;
-                card.innerHTML = `
-                    <i class="fas ${icon} anomaly-icon"></i>
-                    <div class="anomaly-name">${anomaly}</div>
-                    <div class="anomaly-count">${count.toLocaleString()}</div>
-                `;
-                grid.appendChild(card);
-                
-                // Stagger animation
-                setTimeout(() => {
-                    card.style.animation = 'fadeIn 0.5s ease-out both';
-                }, Object.keys(anomalyCounts).indexOf(anomaly) * 100);
-            }
+                if (!card) {
+                    card = document.createElement('div');
+                    card.dataset.anomaly = anomaly;
+                    const isNormal = anomaly === 'normal';
+                    const icon = icons[anomaly] || icons['default'];
+                    
+                    card.className = `anomaly-card ${isNormal ? 'normal' : ''}`;
+                    card.innerHTML = `
+                        <i class="fas ${icon} anomaly-icon"></i>
+                        <div class="anomaly-name">${anomaly}</div>
+                        <div class="anomaly-count">${count.toLocaleString()}</div>
+                    `;
+                    grid.appendChild(card);
+                    
+                    setTimeout(() => {
+                        card.style.animation = 'fadeInUp 0.5s ease-out both';
+                    }, index * 80);
+                } else {
+                    card.querySelector('.anomaly-count').textContent = count.toLocaleString();
+                }
+            });
         }
         
         function updateChargePoints(chargePoints) {
             const container = document.getElementById('charge-points');
-            container.innerHTML = '';
+            const existingCards = new Map(
+                Array.from(container.children).map(card => [card.dataset.cpId, card])
+            );
             
             chargePoints.forEach((cp, index) => {
-                const card = document.createElement('div');
-                const status = cp.status.toLowerCase();
-                card.className = `cp-card ${status}`;
-                card.innerHTML = `
-                    <div class="cp-header">
-                        <div class="cp-id">
-                            <i class="fas fa-charging-station"></i> ${cp.id}
-                        </div>
-                        <div class="cp-status status-${status}">
-                            ${cp.status}
-                        </div>
-                    </div>
-                    <div class="cp-metrics">
-                        <div class="metric">
-                            <div class="metric-label"><i class="fas fa-plug"></i> Voltage</div>
-                            <div class="metric-value">${cp.voltage.toFixed(1)}<small style="font-size:0.5em;">V</small></div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label"><i class="fas fa-bolt"></i> Current</div>
-                            <div class="metric-value">${cp.current.toFixed(1)}<small style="font-size:0.5em;">A</small></div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label"><i class="fas fa-tachometer-alt"></i> Power</div>
-                            <div class="metric-value">${cp.power_kw.toFixed(2)}<small style="font-size:0.5em;">kW</small></div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label"><i class="fas fa-battery-three-quarters"></i> Energy</div>
-                            <div class="metric-value">${cp.energy_kwh.toFixed(3)}<small style="font-size:0.5em;">kWh</small></div>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
+                let card = existingCards.get(cp.id);
                 
-                // Stagger animation
-                setTimeout(() => {
-                    card.style.animation = 'fadeIn 0.5s ease-out both';
-                }, index * 50);
+                if (!card) {
+                    card = document.createElement('div');
+                    card.dataset.cpId = cp.id;
+                    const status = cp.status.toLowerCase();
+                    card.className = `cp-card ${status}`;
+                    card.innerHTML = `
+                        <div class="cp-header">
+                            <div class="cp-id">
+                                <i class="fas fa-charging-station"></i> ${cp.id}
+                            </div>
+                            <div class="cp-status status-${status}">
+                                ${cp.status}
+                            </div>
+                        </div>
+                        <div class="cp-metrics">
+                            <div class="metric">
+                                <div class="metric-label"><i class="fas fa-plug"></i> Voltage</div>
+                                <div class="metric-value">${cp.voltage.toFixed(1)}<small style="font-size:0.5em;">V</small></div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label"><i class="fas fa-bolt"></i> Current</div>
+                                <div class="metric-value">${cp.current.toFixed(1)}<small style="font-size:0.5em;">A</small></div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label"><i class="fas fa-tachometer-alt"></i> Power</div>
+                                <div class="metric-value">${cp.power_kw.toFixed(2)}<small style="font-size:0.5em;">kW</small></div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label"><i class="fas fa-battery-three-quarters"></i> Energy</div>
+                                <div class="metric-value">${cp.energy_kwh.toFixed(3)}<small style="font-size:0.5em;">kWh</small></div>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                    
+                    setTimeout(() => {
+                        card.style.animation = 'fadeInUp 0.5s ease-out both';
+                    }, index * 60);
+                } else {
+                    // Update existing card
+                    const status = cp.status.toLowerCase();
+                    card.className = `cp-card ${status}`;
+                    card.querySelector('.cp-status').className = `cp-status status-${status}`;
+                    card.querySelector('.cp-status').textContent = cp.status;
+                    
+                    const metrics = card.querySelectorAll('.metric-value');
+                    metrics[0].innerHTML = `${cp.voltage.toFixed(1)}<small style="font-size:0.5em;">V</small>`;
+                    metrics[1].innerHTML = `${cp.current.toFixed(1)}<small style="font-size:0.5em;">A</small>`;
+                    metrics[2].innerHTML = `${cp.power_kw.toFixed(2)}<small style="font-size:0.5em;">kW</small>`;
+                    metrics[3].innerHTML = `${cp.energy_kwh.toFixed(3)}<small style="font-size:0.5em;">kWh</small>`;
+                }
             });
         }
         
@@ -914,22 +1181,21 @@
         function updateChart(recentRecords) {
             if (recentRecords.length === 0) return;
             
-            // Update cache
             recentRecords.forEach(record => {
                 if (!chartDataCache[record.cp_id]) {
                     chartDataCache[record.cp_id] = {
                         label: record.cp_id,
                         data: [],
                         borderColor: getColorForCP(record.cp_id),
-                        backgroundColor: getColorForCP(record.cp_id) + '20',
+                        backgroundColor: getColorForCP(record.cp_id) + '30',
                         fill: true,
                         tension: 0.4,
                         borderWidth: 3,
                         pointRadius: 0,
-                        pointHoverRadius: 6,
+                        pointHoverRadius: 8,
                         pointHoverBackgroundColor: getColorForCP(record.cp_id),
                         pointHoverBorderColor: '#ffffff',
-                        pointHoverBorderWidth: 2
+                        pointHoverBorderWidth: 3
                     };
                 }
                 
@@ -943,7 +1209,6 @@
                 }
             });
             
-            // Update chart
             const datasets = Object.values(chartDataCache);
             powerChart.data.datasets = datasets;
             
@@ -976,9 +1241,7 @@
         // Initial load
         fetch('/api/stats')
             .then(res => res.json())
-            .then(data => {
-                socket.emit('stats_update', data);
-            })
+            .then(data => updateDashboard(data))
             .catch(err => console.error('Error loading initial stats:', err));
     </script>
 </body>
