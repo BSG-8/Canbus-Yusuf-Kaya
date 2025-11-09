@@ -1,4 +1,4 @@
-# 🚗⚡ EV Charging Station Simulation & DoS Anomaly Detection
+# 🚗⚡ Charging Station Simulation & DoS Anomaly Detection
 
 **Gerçek OCPP 1.6 protokolü kullanan** elektrikli araç şarj istasyonu simülasyonu ve anomali tespit sistemi. Bu sistem, **DoS (Denial of Service) saldırısını** simüle eder ve **%95+ tespit oranı** ile makine öğrenmesi modelleri eğitir.
 
